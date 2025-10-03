@@ -1,0 +1,55 @@
+syntax = "v1"
+
+info (
+	title:   "用户服务API"
+	desc:    "演示go-zero自定义中间件"
+	author:  "示例"
+	version: "v1.0"
+)
+
+type (
+	UserRequest {
+		Id int64 `path:"id"`
+	}
+	UserResponse {
+		Id   int64  `json:"id"`
+		Name string `json:"name"`
+		Age  int32  `json:"age"`
+	}
+	LoginRequest {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	LoginResponse {
+		Token string       `json:"token"`
+		User  UserResponse `json:"user"`
+	}
+)
+
+// 不需要中间件的路由组
+service user {
+	@handler login
+	post /user/login (LoginRequest) returns (LoginResponse)
+}
+
+// 需要用户代理中间件的路由组
+@server (
+	middleware: UserAgentMiddleware
+)
+service user {
+	@handler userinfo
+	get /user/info/:id (UserRequest) returns (UserResponse)
+}
+
+// 需要多个中间件的路由组（认证+日志+限流）
+@server (
+	middleware: AuthMiddleware,LogMiddleware,RateLimitMiddleware
+)
+service user {
+	@handler updateUser
+	put /user/:id (UserRequest) returns (UserResponse)
+
+	@handler deleteUser
+	delete /user/:id (UserRequest)
+}
+
